@@ -80,10 +80,24 @@ class AdvertisedDeviceCallbacks : public NimBLEAdvertisedDeviceCallbacks {
         if(bt_title.isEmpty()) bt_title = bt_address;
         if(bt_name.isEmpty()) bt_name="<no name>";
         // If BT name is empty, set NONAME
-        if(ESP.getFreeHeap()>4096) options.push_back({bt_title.c_str(), [=]() { ble_info(bt_name, bt_address, bt_signal); }});
-        else {
+        if(ESP.getFreeHeap()>4096) {
+            options.push_back({bt_title.c_str(), [=]() { 
+                ble_info(bt_name, bt_address, bt_signal); 
+                pairWithDevice(advertisedDevice);
+            }});
+        } else {
             Serial.println("Memory low, stopping BLE scan...");
             pBLEScan->stop();
+        }
+    }
+
+    void pairWithDevice(NimBLEAdvertisedDevice* advertisedDevice) {
+        NimBLEClient* pClient = BLEDevice::createClient();
+        pClient->connect(advertisedDevice);
+        if (pClient->isConnected()) {
+            Serial.println("Successfully paired with device: " + advertisedDevice->getAddress().toString().c_str());
+        } else {
+            Serial.println("Failed to pair with device: " + advertisedDevice->getAddress().toString().c_str());
         }
     }
 };
